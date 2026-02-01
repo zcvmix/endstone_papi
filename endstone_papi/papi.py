@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import datetime
 import re
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 from endstone import Player
 from endstone.plugin import Plugin
 
 from ._papi import PlaceholderAPI as IPlaceholderAPI
 from .chars_replacer import apply
+
+if TYPE_CHECKING:
+    from .kill_tracker import KillTracker
 
 
 class PlaceholderAPI(IPlaceholderAPI):
@@ -18,6 +21,11 @@ class PlaceholderAPI(IPlaceholderAPI):
         self._registry: dict[str, Callable[[Player | None, str], str]] = {}
         self._placeholder_pattern = re.compile(r"[{]([^{}]+)[}]")
         self._register_default_placeholders()
+
+    def set_kill_tracker(self, kill_tracker: KillTracker):
+        """Set the kill tracker instance and register kill-related placeholders."""
+        self._kill_tracker = kill_tracker
+        self._register_kill_placeholders()
 
     def set_placeholders(self, player: Player | None, text: str) -> str:
         """
@@ -137,7 +145,7 @@ class PlaceholderAPI(IPlaceholderAPI):
             lambda player, params: player.location.dimension.type.value,
         )
         self.register_placeholder(
-            self._plugin, "ping", lambda player, params: player.ping
+            self._plugin, "ping", lambda player, params: str(player.ping)
         )
         self.register_placeholder(
             self._plugin,
@@ -203,16 +211,16 @@ class PlaceholderAPI(IPlaceholderAPI):
             self._plugin, "address", lambda player, params: player.address
         )
         self.register_placeholder(
-            self._plugin, "runtime_id", lambda player, params: player.runtime_id
+            self._plugin, "runtime_id", lambda player, params: str(player.runtime_id)
         )
         self.register_placeholder(
-            self._plugin, "exp_level", lambda player, params: player.exp_level
+            self._plugin, "exp_level", lambda player, params: str(player.exp_level)
         )
         self.register_placeholder(
-            self._plugin, "total_exp", lambda player, params: player.total_exp
+            self._plugin, "total_exp", lambda player, params: str(player.total_exp)
         )
         self.register_placeholder(
-            self._plugin, "exp_progress", lambda player, params: player.exp_progress
+            self._plugin, "exp_progress", lambda player, params: str(player.exp_progress)
         )
         self.register_placeholder(
             self._plugin,
@@ -223,11 +231,24 @@ class PlaceholderAPI(IPlaceholderAPI):
             self._plugin, "xuid", lambda player, params: player.xuid
         )
         self.register_placeholder(
-            self._plugin, "uuid", lambda player, params: player.unique_id
+            self._plugin, "uuid", lambda player, params: str(player.unique_id)
         )
         self.register_placeholder(
             self._plugin, "device_os", lambda player, params: player.device_os
         )
         self.register_placeholder(
             self._plugin, "locale", lambda player, params: player.locale
+        )
+
+    def _register_kill_placeholders(self):
+        """Register kill count and killstreak placeholders."""
+        self.register_placeholder(
+            self._plugin,
+            "kills",
+            lambda player, params: str(self._kill_tracker.get_kills(player))
+        )
+        self.register_placeholder(
+            self._plugin,
+            "killstreak",
+            lambda player, params: str(self._kill_tracker.get_killstreak(player))
         )
