@@ -140,6 +140,8 @@ There are a number of built-in placeholders that can be used once papi is instal
 - [x] `{uuid}` player's uuid
 - [x] `{device_os}` os name of player's current device
 - [x] `{locale}` player's locale
+- [x] `{kills}` player's kill count
+- [x] `{killstreak}` player's kill streak count
 
 ## Requirement
 
